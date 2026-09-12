@@ -1,4 +1,6 @@
 venv/
-data/
+data/*
+!data/categories.csv
 __pycache__/
 *.pyc
+.env

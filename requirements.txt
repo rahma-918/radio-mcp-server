@@ -1,3 +1,6 @@
 mcp==2.2.0
 pandas
 openpyxl
+google-genai
+pydantic
+python-dotenv

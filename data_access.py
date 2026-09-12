@@ -55,3 +55,50 @@ def compter_occurrences(df: pd.DataFrame, mot_cle: str) -> int:
         return 0
     masque = df["CONTRENDU"].str.contains(mot_cle, case=False, na=False)
     return int(masque.sum())
+
+
+# Chemin vers le fichier de catégories généré par categorize_corpus.py
+CATEGORIES_PATH = Path(__file__).parent / "data" / "categories.csv"
+
+# Valeur utilisée dans categorize_corpus.py pour signaler un échec technique
+# (pas une vraie catégorie clinique) — répétée ici pour que les deux fichiers
+# reconnaissent la même convention sans dépendre l'un de l'autre.
+ECHEC_TECHNIQUE = "echec_technique"
+
+
+def charger_categories() -> pd.DataFrame | None:
+    """
+    Charge le fichier de catégories généré par categorize_corpus.py.
+    """
+    if not CATEGORIES_PATH.exists():
+        return None
+    return pd.read_csv(CATEGORIES_PATH)
+
+
+def obtenir_repartition_categories(df_categories: pd.DataFrame) -> dict:
+    """
+    Calcule la répartition des catégories cliniques sur l'échantillon classifié.
+
+    Les lignes marquées comme échec technique sont comptées séparément
+    et exclues du calcul des pourcentages : elles ne représentent aucune
+    vraie catégorie clinique, les inclure fausserait la répartition.
+    """
+    total = len(df_categories)
+
+    nb_echecs = int((df_categories["categorie"] == ECHEC_TECHNIQUE).sum())
+    df_valides = df_categories[df_categories["categorie"] != ECHEC_TECHNIQUE]
+    total_valides = len(df_valides)
+
+    comptes = df_valides["categorie"].value_counts()
+    repartition = {}
+    for categorie, nombre in comptes.items():
+        repartition[categorie] = {
+            "nombre": int(nombre),
+            "pourcentage": round(100 * nombre / total_valides, 1) if total_valides else 0.0,
+        }
+
+    return {
+        "taille_echantillon": total,
+        "echecs_techniques": nb_echecs,
+        "repartition": repartition,
+    }
